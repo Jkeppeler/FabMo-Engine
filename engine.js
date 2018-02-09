@@ -18,7 +18,7 @@ var fs = require('fs');
 var sessions = require("client-sessions");
 var authentication = require('./authentication');
 var crypto = require('crypto');
-
+var profiles = require('./profiles');
 
 var Engine = function() {
     this.version = null;
@@ -137,6 +137,10 @@ Engine.prototype.start = function(callback) {
             }
         },
 
+        function load_profiles(callback) {
+            profiles.load(function() {callback()});
+        }.bind(this),
+        
         function profile_shim(callback) {
             var profile = config.engine.get('profile');
             var def = '';
@@ -154,7 +158,6 @@ Engine.prototype.start = function(callback) {
                 })
             }
         }.bind(this), 
-
         function get_fabmo_version(callback) {
             log.info("Getting engine version...");
             this.getVersion(function(err, data) {
