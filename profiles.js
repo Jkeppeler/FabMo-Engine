@@ -5,7 +5,7 @@ var log = require('./log').logger('profiles')
 var ncp = require('ncp').ncp
 
 var PROFILE_DIRS = ['config','macros','apps']
-var profiles = []
+var profiles = {}
 
 var load = function(callback) {
 	var profileDir = config.getDataDir('profiles')
@@ -22,7 +22,7 @@ var load = function(callback) {
 						if(err) {
 							log.error(err);
 						} else {
-							profiles.push(profile);
+							profiles[profile.name] = profile;
 						}
 						callback(null);
 					});
@@ -68,3 +68,4 @@ var apply = function(profile, callback) {
 
 module.exports.load = load
 module.exports.apply = apply
+module.exports.getProfiles = function() {return profiles;}
