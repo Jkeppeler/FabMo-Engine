@@ -47,7 +47,7 @@ ManualDriver.prototype.enter = function() {
     this.stream.write('M100.1 ({yjm:'+jerkXY+'})\n');
     this.stream.write('M100.1 ({zjm:'+jerkZ+'})\n');	
     this.stream.write('M100.1 ({zl:0})\n');	
-
+	this.driver.prime();
 	this.deferred = Q.defer();
 	return this.deferred.promise;
 
@@ -66,13 +66,13 @@ ManualDriver.prototype.exit = function() {
         }.bind(this));
 		this.driver.removeListener('status', this.status_handler);
 		this.exited = true;
-		this.deferred.resolve();
 	}
 }
 
-ManualDriver.prototype.startMotion = function(axis, speed) {
+ManualDriver.prototype.startMotion = function(axis,  speed, second_axis, second_speed) {
 	log.debug("startMotion called")
 	var dir = speed < 0 ? -1.0 : 1.0;
+	var second_dir = second_speed < 0 ? -1.0 : 1.0;
 	speed = Math.abs(speed);
 	if(this.moving) {
 		log.debug("Already moving")
@@ -83,17 +83,27 @@ ManualDriver.prototype.startMotion = function(axis, speed) {
 			// Deal with direction changes here
 		}
 	} else {
+		if (second_axis){
+			this.second_axis = second_axis;
+			this.second_currentDirection = second_dir;
+		} else {
+			this.second_axis = null;
+			this.second_currentDirection = null;
+		}
 		log.debug("Not moving")
 		// Set Heading
 		this.currentAxis = axis;
 		this.currentSpeed = speed;
 		this.currentDirection = dir;
+
 		this.moving = this.keep_moving = true;
 		this.renewDistance = speed*(T_RENEW/60000)*SAFETY_FACTOR;                
 		this.stream.write('G91 F' + this.currentSpeed.toFixed(3) + '\n');
 		this._renewMoves();
 	}
 }
+
+
 
 ManualDriver.prototype.maintainMotion = function() {
 	if(this.moving) {
@@ -117,6 +127,50 @@ ManualDriver.prototype.stopMotion = function() {
 
 ManualDriver.prototype.goto = function(pos) {
 
+	var move = "G90\nG0 ";
+
+	for (var key in pos) {
+		if (pos.hasOwnProperty(key)) {
+			move += key + pos[key] + " ";
+		}
+	}
+
+	move += "\nG91\n";
+	this.driver.prime();
+	this.stream.write(move);
+	
+}
+
+ManualDriver.prototype.set = function(pos) {
+	
+	var gc = 'G10 L20 P2 ';
+
+	Object.keys(pos).forEach(function(key) {
+/*
+		this.driver.get('mpo'+key.toLowerCase(), function(err, MPO) {
+
+			var zObj = {};
+			var unitConv = 1.0;
+			if ( this.driver.status.unit === 'in' ) {  // inches
+				unitConv = 0.039370079;
+			}
+
+			zObj['g55'+key.toLocaleLowerCase()] = Number((MPO * unitConv) - (parseFloat(pos[key]))).toFixed(5);
+
+			config.driver.setMany(zObj, function(err, value) {
+				this.stream.write('G10 L20 P2 \n');
+				this.driver.prime();
+			}.bind(this));
+		}.bind(this));
+*/
+		gc += key + pos[key].toFixed(5);
+	}.bind(this));
+	
+		this.stream.write(gc + '\n');
+		this.driver.prime();
+		setTimeout(function() {
+			config.driver.reverseUpdate(['g55x','g55y','g55z'], function(err, data) {console.log(data);});
+		}.bind(this), 500);
 }
 
 ManualDriver.prototype._handleNudges = function() {
@@ -128,13 +182,24 @@ ManualDriver.prototype._handleNudges = function() {
 			this.moving = true;
 			this.keep_moving = false;
 			var axis = move.axis.toUpperCase();
+
 			if('XYZABCUVW'.indexOf(axis) >= 0) {
 				var moves = ['G91'];
-				if(move.speed) {
-					moves.push('G1 ' + axis + move.distance.toFixed(5) + ' F' + move.speed.toFixed(3))
+				if(move.second_axis) {
+					var second_axis = move.second_axis.toUpperCase();
+					if(move.speed) {
+						moves.push('G1 ' + axis + move.distance.toFixed(5) +' '+ second_axis + move.second_distance.toFixed(5) + ' F' + move.speed.toFixed(3))
+					} else {
+						moves.push('G0 ' + axis + move.distance.toFixed(5)  +' '+ move.second_axis.toUpperCase + move.second_distance.toFixed(5) + ' F' + move.speed.toFixed(3))
+					}
 				} else {
-					moves.push('G0 ' + axis + move.distance.toFixed(5) + ' F' + move.speed.toFixed(3))
+					if(move.speed) {
+						moves.push('G1 ' + axis + move.distance.toFixed(5) + ' F' + move.speed.toFixed(3))
+					} else {
+						moves.push('G0 ' + axis + move.distance.toFixed(5) + ' F' + move.speed.toFixed(3))
+					}
 				}
+				
 
 				moves.forEach(function(move) {
 					this.stream.write(move + '\n');
@@ -149,12 +214,17 @@ ManualDriver.prototype._handleNudges = function() {
 	return count;
 }
 
-ManualDriver.prototype.nudge = function(axis, speed, distance) {
+ManualDriver.prototype.nudge = function(axis, speed, distance, second_axis, second_distance) {
     if(this.fixedQueue.length >= FIXED_MOVES_QUEUE_SIZE) {
 	log.warn('fixedMove(): Move queue is already full!');
     	    return;
-    }
-	this.fixedQueue.push({axis: axis, speed: speed, distance: distance});
+	}
+	if(second_axis) {
+		this.fixedQueue.push({axis: axis, speed: speed, distance: distance, second_axis : second_axis, second_distance: second_distance});
+	} else {
+		this.fixedQueue.push({axis: axis, speed: speed, distance: distance});
+	}
+
     if(this.moving) {
 	//	this.fixedQueue.push({axis: axis, speed: speed, distance: distance});
 		log.warn("fixedMove(): Queueing move, due to already moving.");
@@ -173,14 +243,24 @@ ManualDriver.prototype._renewMoves = function() {
 		log.debug('Renewing moves because of reasons')
 		this.keep_moving = false;
 		var segment = this.currentDirection*(this.renewDistance / RENEW_SEGMENTS);
+		var second_segment = this.second_currentDirection*(this.renewDistance / RENEW_SEGMENTS);
 		//console.log("Paused? ", this.driver.context._paused);
 		//console.log("Flooded? ", this.driver.flooded);
 		//console.log(this.driver.getInfo())
 		//this.driver.resume();
-		for(var i=0; i<RENEW_SEGMENTS; i++) {
-			var move = 'G1 ' + this.currentAxis + segment.toFixed(5) + '\n'
-			this.stream.write(move);
+		if (this.second_axis){
+			for(var i=0; i<RENEW_SEGMENTS; i++) {
+				var move = 'G1 ' + this.currentAxis + segment.toFixed(5) +' '+ this.second_axis + second_segment.toFixed(5) +'\n'
+				this.stream.write(move);
+			}
+
+		} else {
+			for(var i=0; i<RENEW_SEGMENTS; i++) {
+				var move = 'G1 ' + this.currentAxis + segment.toFixed(5) + '\n'
+				this.stream.write(move);
+			}
 		}
+	
 		this.driver.prime();
 		setTimeout(function() {
 			this._renewMoves()
@@ -234,6 +314,7 @@ ManualDriver.prototype._done = function() {
 	this.moving = false;
     this.keep_moving = false;
     this.stream = null;
+	this.deferred.resolve();
 }
 
 

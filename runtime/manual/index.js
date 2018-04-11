@@ -70,6 +70,7 @@ ManualRuntime.prototype.enter = function() {
 	this.machine.setState(this, "manual");
 }
 
+
 ManualRuntime.prototype.executeCode = function(code, callback) {
 	this.completeCallback = callback;
 
@@ -96,7 +97,7 @@ ManualRuntime.prototype.executeCode = function(code, callback) {
 					break;
 
 				case 'start':
-					this.helper.startMotion(code.axis, code.speed);
+					this.helper.startMotion(code.axis, code.speed, code.second_axis, code.second_speed);
 					break;
 
 				case 'stop':
@@ -106,12 +107,20 @@ ManualRuntime.prototype.executeCode = function(code, callback) {
 				case 'maint':
 					this.helper.maintainMotion();
 					break;
+					
+				case 'goto':
+					this.helper.goto(code.move)
+					break;
+
+				case 'set':
+					this.helper.set(code.move)
+					break;
 
 				case 'fixed':
 					if(!this.helper) {
 						this.enter();
 					}
-					this.helper.nudge(code.axis, code.speed, code.dist);
+					this.helper.nudge(code.axis, code.speed, code.dist, code.second_axis, code.second_dist);
 					break;
 
 				default:
@@ -140,3 +149,4 @@ ManualRuntime.prototype._onG2Status = function(status) {
 };
 
 exports.ManualRuntime = ManualRuntime;
+exports.ManualDriver = ManualDriver

@@ -76,11 +76,7 @@
             <div class="large-4 columns"> 
               <div class="row collapse">
                 <label data-tip="The machine profile sets the default values, apps and macros for your tool.  Changing this setting will require you to reboot your tool.">Machine Profile<div class="tool-tip">i</div></label>
-                <select id="engine-profile" class="engine-input">
-                  <option value="default">Default</option>
-                  <option value="handibot">Handibot 1 (Developer Edition)</option>
-                  <option value="handibot2">Handibot 2 (Adventure Edition)</option>
-                  <option value="handibot-lst">Handibot Long Sheet Tool</option>
+                <select id="profile-listbox">
                 </select>
               </div>
             </div>
@@ -1669,6 +1665,26 @@
               </div>
 
               <div class="row collapse">
+                <label data-tip="Minimum adjustable speed for driving the tool with the keypad. ">Min XY Speed <div class="tool-tip">i</div></label>
+                <div class="small-9 columns">
+                  <input type="number" id="machine-manual-xy_min" class="machine-input" />
+                </div>
+                <div class="small-3 columns">
+                  <span class="postfix ips_mmps_label">&nbsp;</span>
+                </div>
+              </div>
+
+              <div class="row collapse">
+                <label data-tip="Maximum adjustable speed for driving the tool with the keypad. "> Max XY Speed <div class="tool-tip">i</div></label>
+                <div class="small-9 columns">
+                  <input type="number" id="machine-manual-xy_max" class="machine-input" />
+                </div>
+                <div class="small-3 columns">
+                  <span class="postfix ips_mmps_label">&nbsp;</span>
+                </div>
+              </div>
+
+              <div class="row collapse">
                 <label data-tip="Z speed when driving the tool with the DRO display or keyboard.">Z Speed <div class="tool-tip">i</div></label>
                 <div class="small-9 columns">
                   <input type="number" id="machine-manual-z_speed" class="machine-input" />
@@ -1688,6 +1704,7 @@
                 </div>
               </div>
 
+
               <div class="row collapse">
                 <label data-tip='Amount to move in the Z axis for each "nudge" or incremental move issued from the keyboard or DRO'>Z Increment <div class="tool-tip">i</div></label>
                 <div class="small-9 columns">
@@ -1695,6 +1712,15 @@
                 </div>
                 <div class="small-3 columns">
                   <span class="postfix in_mm_label">&nbsp;</span>
+                </div>
+              </div>
+              <div class="row collapse">
+                <label data-tip='Amount to move in the a and b axis for each "nudge" or incremental move issued from the keyboard or DRO'>AB Increment <div class="tool-tip">i</div></label>
+                <div class="small-9 columns">
+                  <input type="number" id="machine-manual-ab_increment" class="machine-input" />
+                </div>
+                <div class="small-3 columns">
+                  <span class="postfix">deg</span>
                 </div>
               </div>
 

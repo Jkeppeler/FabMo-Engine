@@ -31,17 +31,18 @@ MachineConfig.prototype.update = function(data, callback, force) {
 	if('units' in data) {
 		new_units = data.units;
 		if(!force && current_units && current_units != new_units) {
-			var conv = new_units == 'mm' ? 25.4 : 1/25.4;
+			var conv = (new_units == 'mm') ? 25.4 : 1/25.4;
 
 			['xmin','xmax','ymin','ymax'].forEach(function(key) {
 				this._cache.envelope[key] = round(this._cache.envelope[key]*conv, new_units);
 			}.bind(this));
 
-			['xy_speed','z_speed','xy_increment','z_increment'].forEach(function(key) {
+			['xy_speed','z_speed','xy_increment','z_increment', 'xy_min', 'xy_max', 'xy_jerk', 'z_jerk'].forEach(function(key) {
 				this._cache.manual[key] = round(this._cache.manual[key]*conv, new_units);
 			}.bind(this));
 		}
 	}
+
 	this.save(function(err, result) {
 		if(err) {
 			callback(err);

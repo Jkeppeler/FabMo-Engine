@@ -12,6 +12,14 @@
   "use strict"
 
 var MAX_INPUTS = 16;
+var currentUnits = null;
+var mouseX;
+var mouseY;
+$(document).on("mousemove touchmove", function(e) {
+   mouseX = e.pageX; 
+   mouseY = e.pageY;
+});  
+
 
 function FabMoUI(tool, options){
 	this.progress = 0;
@@ -38,6 +46,19 @@ function FabMoUI(tool, options){
 	//1 step of keypad, in inches
 
 	this.file_control= true;
+
+
+	//display move speed
+	$('#manual-move-speed').on('input', function(e){
+		$('.speed_read_out').show();
+		$('.speed_read_out').html($('#manual-move-speed').val());
+		$('.speed_read_out').css({'top':$('#manual-move-speed').offset().top-35, 'left': mouseX })
+		
+	});
+
+	$('#manual-move-speed').on('mouseup touchend', function(){
+		$('.speed_read_out').hide();
+	})
 
 	if (options){
 		this.prefix = options.prefix ? options.prefix + '-' : '';
@@ -69,7 +90,7 @@ function FabMoUI(tool, options){
 	this.resume_button_selector = this.file_control_selector + ' .resumeJob';
 	this.pause_button_selector = this.file_control_selector + ' .pauseJob-wrapper';
 
-	this.units_selector = this.status_div_selector + ' .units';
+	this.units_selector = '.units';
 
 	if(this.keypad){
 		this.my_keypad = this.Keypad;
@@ -155,10 +176,10 @@ FabMoUI.prototype.updateText = function(control, txt) {
 };
 
 FabMoUI.prototype.updateStatusContent = function(status){
+
 	var that = this;
 	var prev_state = that.tool.state;
 	that.tool.state=status.state;
-	console.log(status.state)
 	if(prev_state !== status.state) {
 		if(status.state === 'stopped') {
 			if(status.info) {
@@ -176,10 +197,38 @@ FabMoUI.prototype.updateStatusContent = function(status){
 	}
 
 	var unit = status.unit || '??';
+
 	var digits = unit === 'mm' ? 2 : 3;
+
+	if (unit !== currentUnits){
+		currentUnits = unit;
+		that.updateText($(that.units_selector), unit)
+	}
+
 	['x','y','z','a','b'].forEach(function(axis) {
 		var pos = 'pos' + axis;
 		if(pos in status) {
+			if(axis === "b") {
+				$('.x_pos.y_pos').hide();
+				$('.b_pos').show();
+				$('.x_pos.y_neg').hide();
+				$('.b_neg').show();
+
+			} else if(axis === "a"){
+				$('.x_neg.y_pos').hide();
+				$('.a_pos').show();
+				$('.x_neg.y_neg').hide();
+				$('.a_neg').show();
+			}else {
+				$('.x_neg.y_pos').show();
+				$('.x_neg.y_neg').show();
+				$('.x_pos.y_pos').show();
+				$('.a_pos').hide();
+				$('b_pos').hide();
+				$('.x_pos.y_neg').show();
+				$('.b_neg').hide();
+				$('.a_neg').hide();
+			}
 			$('.' + axis + 'axis').show();
 			try {
 				var posText = status[pos].toFixed(digits);
@@ -192,7 +241,7 @@ FabMoUI.prototype.updateStatusContent = function(status){
 		}
 	});
 
-	that.updateText($(that.units_selector), unit)
+
 
 	//Current File or job
 	if(status.job) {
@@ -281,6 +330,7 @@ FabMoUI.prototype.updateStatusContent = function(status){
 			break;
 		}
 	}
+	
 
 	$(that.status_div_selector).trigger('statechange',status.state);
 
@@ -293,7 +343,6 @@ FabMoUI.prototype.updateStatusContent = function(status){
 		$(".tools-current > li a").removeClass('paus err disc');
 		$(that.state_selector).html(statename);
 		$(".exit-button").hide();
-		$(".enter-button").removeClass('drive-button-active').addClass('drive-button-inactive');
 
 		if(that.file_control)
 		{
@@ -324,8 +373,6 @@ FabMoUI.prototype.updateStatusContent = function(status){
 		$(that.status_div_selector).removeClass('fabmo-status-running');
 		$(".tools-current > li a").removeClass('disc err').addClass('paus');
 		$(that.state_selector).html(statename);
-		$(".exit-button").show();
-		$(".enter-button").removeClass('drive-button-inactive').addClass('drive-button-active');
 
 		if(that.file_control)
 		{

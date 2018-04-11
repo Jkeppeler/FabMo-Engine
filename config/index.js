@@ -6,6 +6,7 @@ var OpenSBPConfig = require('./opensbp_config').OpenSBPConfig;
 var MachineConfig = require('./machine_config').MachineConfig;
 var DashboardCofnig = require('./dashboard_config').DashboardConfig;
 var InstanceConfig = require('./instance_config').InstanceConfig;
+var ProfileConfig = require('./profile_config').ProfileConfig;
 
 var fs = require('fs');
 var path = require('path');
@@ -21,7 +22,6 @@ var log = require('../log').logger('config');
 function configureEngine(callback) {
 	exports.engine = new EngineConfig();
 	exports.engine.init(function() {
-		console.log(Config.getCurrentProfile());
 		callback();
 	});
 }
@@ -119,3 +119,5 @@ exports.getLockFile = getLockFile;
 
 exports.clearAppRoot = clearAppRoot
 exports.platform = require('process').platform;
+
+exports.profiles = new ProfileConfig();

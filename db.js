@@ -1,4 +1,5 @@
 var assert = require('assert');
+var async = require('async');
 var fs = require('fs-extra');
 var crypto = require('crypto');
 var log = require('./log').logger('db');
@@ -7,6 +8,7 @@ var util = require('./util');
 var ncp = require('ncp').ncp;
 var process = require('process');
 var cnctosvg = require("cnctosvg");
+
 
 // Connect to TingoDB database that stores the files
 var Engine = require('tingodb')();
@@ -18,6 +20,9 @@ var files;
 var jobs;
 var users;
 var thumbnails;
+
+var maxStorage = 500000000;
+var totalSize = 0;
 
 function notifyChange() {
 	var machine = require('./machine').machine;
@@ -41,7 +46,7 @@ Job.prototype.clone = function(callback) {
 	var job = new Job({
 		file_id : this.file_id,
 		name : this.name,
-		description : this.description
+		description : this.description 
 	});
 	job.save(callback);
 };
@@ -162,8 +167,13 @@ Job.getHistory = function(options, callback) {
 };
 
 Job.getAll = function(callback) {
-	jobs.find().toArray(function(array) {
-		callback(array);
+	jobs.find().toArray(function(err, array) {
+		if(err){
+			throw err
+		} else {
+			callback(array);
+		}
+
 	});
 };
 
@@ -191,8 +201,7 @@ Job.getFileForJobId = function(id, callback) {
 	});
 }
 // Return a file object for the provided id
-Job.getById = function(id,callback)
-{
+Job.getById = function(id,callback) {
 	jobs.findOne({_id: id},function(err,document){
 		if (!document){
 			callback("No such job ID: " + id, undefined);
@@ -248,12 +257,6 @@ function File(filename,path, callback){
 	this.last_run = null;
 	this.run_count = 0;
 	this.hash = null;
-	fs.stat(path, function(err, stat) {
-		if(err) {
-			throw err;
-		}
-		that.size = stat.size;
-	});
 }
 
 File.hash = function(path, callback) {
@@ -283,15 +286,26 @@ File.prototype.save = function(callback) {
 	}
 	else{
 		log.info('Creating a new document.');
-		files.insert(that, function(err,records){
-			if(!err) {
-				callback(null, records[0]);
-				backupDB(callback);
+		util.getSize(that.path, function(err, size){
+			if(err){
+				log.warn('file has no size');
+			} else {
+				that.size = size;
+
+				files.insert(that, function(err,records){
+					if(!err) {
+						callback(null, records[0]);
+						backupDB(callback);
+						totalSize += records[0].size;
+					}
+					else {
+						callback(err);
+					}
+				});
 			}
-			else {
-				callback(err);
-			}
+
 		});
+
 	}
 	});
 };
@@ -302,9 +316,130 @@ File.prototype.delete = function(callback){
 	thumbnails.remove({file_id : this._id},function(err){if(!err)callback();else callback(err);});
 };
 
+File.obliterate = function(file, callback){
+	var id = file._id
+	fs.remove(file.path, function(err){
+		if (err){
+			callback(err);
+		} else {
+			files.remove({_id : id},function(err){
+				if(err) {
+					callback(err);
+				} else {
+					jobs.remove({file_id : id},function(err) {
+						if(err){
+							callback(err);
+						} else {
+							callback(null, 'Obliterated' + file.filename);
+						}
+					});
+				}
+			});
+		}
+	});
+	
+	//thumbnails.remove({file_id : id},function(err){if(!err)callback();else callback(err);});
+
+}
+
+File.clearTrash = function(callback){
+	var toTrash = [];
+	files.find().toArray(function(err, files){
+		Job.getAll (function(jobs){
+			for (var j = 0; j < files.length -1; j++) {
+				var keepFile = false;
+				for(var i = 0; i < jobs.length -1; i++) {
+					if(jobs[i].state !== 'trash' && parseInt(files[j]._id) === parseInt(jobs[i].file_id))  {
+						keepFile = true;
+						break
+					}
+				}
+				if (!keepFile){
+					toTrash.push(files[j]);
+				}
+			}
+			async.each(toTrash, function(_file, callback){
+				File.obliterate(_file, function(err, msg){
+					if(err){
+						throw err;
+					} else {
+						totalSize -= _file.size;
+						callback();
+					}
+				})
+			
+
+			});
+
+			});
+	
+		
+	});
+	callback(null);
+}
+
+
+
+
+File.getTotalFileSize = function(callback){
+	files.find().toArray(function(err,result){
+		if(err) {
+			log.warn(err);
+		} else {
+			result.forEach(function(file){
+				if(file.size === undefined){
+					var size2b =  new Promise( function(resolve, reject) {
+						util.getSize(file.path, function(err, fileSize){
+							resolve(fileSize);
+						});
+					});
+					size2b.then(function(val){
+						files.update({_id : file._id}, {$set : {size : val}});	
+						totalSize += val;
+					});
+				} else {
+					totalSize += file.size;
+				}
+
+			});
+		}
+	});
+
+};
+
+
+
+
 // Update the "last run" time (use the current time)
 File.prototype.saverun = function(){
 	files.update({_id : this._id}, {$set : {last_run : Date.now()}, $inc : {run_count:1}});
+};
+
+File.writeToDisk = function(pathname, full_path, friendly_filename, hash, callback){
+	util.move(pathname, full_path, function(err) {
+		if(err) {
+			return callback(err);
+		}
+		// delete the temporary file, so that the temporary upload dir does not get filled with unwanted files
+		fs.unlink(pathname, function(err) {
+			if (err) {
+				// Failure to delete the temporary file is bad, but non-fatal
+				log.warn("failed to remove the job from temporary folder: " + err);
+			}
+
+			var file = new File(friendly_filename, full_path);
+			file.hash = hash;
+			file.save(function(err, file){
+				if(err) {
+					return callback(err);
+				}
+				log.info('Saved a file: ' + file.filename + ' (' + file.path + ')');
+
+				callback(null, file)
+			}.bind(this)); // save
+			//set off async file size update
+		}.bind(this)); // unlink
+	}); // move
 };
 
 File.add = function(friendly_filename, pathname, callback) {
@@ -324,29 +459,37 @@ File.add = function(friendly_filename, pathname, callback) {
 			} else {
 				log.info("Saving a new file with a hash of " + hash + ".");
 				// Move the file
-				util.move(pathname, full_path, function(err) {
-					if(err) {
-						return callback(err);
-					}
-					// delete the temporary file, so that the temporary upload dir does not get filled with unwanted files
-					fs.unlink(pathname, function(err) {
-						if (err) {
-							// Failure to delete the temporary file is bad, but non-fatal
-							log.warn("failed to remove the job from temporary folder: " + err);
-						}
+				util.getSize(pathname, function(err, size){
+					if(err){
+						log.error(err)
+					} else {
+						if(size + totalSize > maxStorage ) {
+							File.clearTrash(function(err){
+								if(err){
+									throw err
+								} else {
+									log.info('done with trash');
+									File.writeToDisk(pathname, full_path, friendly_filename, hash, function(err, file){
 
-						var file = new File(friendly_filename, full_path);
-						file.hash = hash;
-						file.save(function(err, file){
-							if(err) {
-								return callback(err);
-							}
-							log.info('Saved a file: ' + file.filename + ' (' + file.path + ')');
-			
-							callback(null, file)
-						}.bind(this)); // save
-					}.bind(this)); // unlink
-				}); // move
+										if(err){
+											throw err;
+										} else {
+											callback(null, file);
+										}
+									})
+								}
+							})
+						} else {
+							File.writeToDisk(pathname, full_path, friendly_filename, hash, function(err, file){
+								if(err){
+									throw err;
+								} else {
+									callback(null, file);
+								}
+							})
+						}
+					}
+				}.bind(this));//check size 
 			}
 		});
 	})
@@ -363,6 +506,7 @@ File.list_all = function(callback){
 		callback(result);
 	});
 };
+
 
 // Return a file object for the provided id
 File.getByID = function(id,callback)
@@ -880,7 +1024,7 @@ exports.configureDB = function(callback) {
 				
 			}
 		});
-		
+		File.getTotalFileSize();
 };
 
 exports.cleanup = function(callback) {

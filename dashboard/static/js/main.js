@@ -40,6 +40,8 @@ require("../css/toastr.min.css");
     var isAuth = false;
     var lastInfoSeen = null;
     var consent = '';
+    var disconnected = false;
+    var last_state_seen = null;
 
     // Detect touch screen
     var supportsTouch = 'ontouchstart' in window || navigator.msMaxTouchPoints;
@@ -64,12 +66,12 @@ require("../css/toastr.min.css");
                     hideConsent();
                 }
             });
-       
+            
        }
        return consent;
     });    
 
-    engine.getConfig();
+
     engine.getVersion(function(err, version) {
 
         context.setEngineVersion(version);
@@ -103,8 +105,6 @@ require("../css/toastr.min.css");
                 // Request a status update from the tool
                 engine.getStatus();
 
-
-
                 dashboard.engine.on('change', function(topic) {
                     if (topic === 'apps') {
                         context.apps.fetch();
@@ -119,6 +119,31 @@ require("../css/toastr.min.css");
                             noButton : true
                         });
                         return;
+                    }
+
+                    if(status.state === "manual") {
+                        $('.modalDim').show();
+                        $('.manual-drive-modal').show();
+                    }
+
+                    if(status.state !== "manual") {
+                        $('.modalDim').hide();
+                        $('.manual-drive-modal').hide();
+                    }
+
+                    if(status.state === "idle") {
+                        engine.getConfig(function(err, config){
+                            if(err){
+                                console.log(err);
+                            } else {
+                                var manual_config = config.machine.manual;
+                                $('.xy-fixed').val(manual_config.xy_increment);
+                                $('.z-fixed').val(manual_config.z_increment);
+                                $('#manual-move-speed').val(manual_config.xy_speed);
+                                $('#manual-move-speed').attr('min', manual_config.xy_min);
+                                $('#manual-move-speed').attr('max', manual_config.xy_max);
+                            }
+                        });
                     }
 
                     if (status.state != "armed" && last_state_seen === "armed" || status.state != "paused" && last_state_seen === "paused") {
@@ -153,21 +178,26 @@ require("../css/toastr.min.css");
                     if (status['info'] && status['info']['id'] != lastInfoSeen) {
                         lastInfoSeen = status['info']['id'];
                         if (status.info['message']) {
-                            keypad.setEnabled(false);
-                            keyboard.setEnabled(false);
+                            if(status.state ==="manual"){
+                                $('.manual-drive-message').show();
+                                $('.manual-drive-message').html(status.info.message);
 
-                            dashboard.showModal({
-                                message: status.info.message,
-                                okText: 'Resume',
-                                cancelText: 'Quit',
-                                ok: function() {
-                                    dashboard.engine.resume();
-                                },
-                                cancel: function() {
-                                    dashboard.engine.quit();
-                                }
-                            });
-                            modalIsShown = true;
+                            } else {
+                                keypad.setEnabled(false);
+                                keyboard.setEnabled(false);
+                                dashboard.showModal({
+                                    message: status.info.message,
+                                    okText: 'Resume',
+                                    cancelText: 'Quit',
+                                    ok: function() {
+                                        dashboard.engine.resume();
+                                    },
+                                    cancel: function() {
+                                        dashboard.engine.quit();
+                                    }
+                                });
+                                modalIsShown = true;
+                            }
                         } else if (status.info['error']) {
                             if (dashboard.engine.status.job) {
                                 var detailHTML = '<p>' +
@@ -194,7 +224,7 @@ require("../css/toastr.min.css");
                             keyboard.setEnabled(false);
                         dashboard.showModal({
                             title: 'Authorization Required!',
-                            message: 'To authorize your tool, press and hold the green button for one second.',
+                            message: 'To authorize your tool, press and hold the start button for one second.',
                             cancelText: 'Quit',
                             cancel: function() {
                                 authorizeDialog = false;
@@ -211,19 +241,22 @@ require("../css/toastr.min.css");
 
     function getManualMoveSpeed(move) {
         var speed_ips = null;
-        try {
-            switch (move.axis) {
-                case 'x':
-                case 'y':
-                    speed_ips = engine.config.machine.manual.xy_speed;
-                    break;
-                case 'z':
-                    speed_ips = engine.config.machine.manual.z_speed;
-                    break;
-            }
-        } catch (e) {
-            console.error(e);
+        if ($('#manual-move-speed').val()){
+            speed_ips = $('#manual-move-speed').val();
         }
+        // try {
+        //     switch (move.axis) {
+        //         case 'x':
+        //         case 'y':
+        //             speed_ips = engine.config.machine.manual.xy_speed;
+        //             break;
+        //         case 'z':
+        //             speed_ips = engine.config.machine.manual.z_speed;
+        //             break;
+        //     }
+        // } catch (e) {
+        //     console.error(e);
+        // }
         return speed_ips;
     }
 
@@ -256,6 +289,10 @@ require("../css/toastr.min.css");
                 case 'z':
                     increment_inches = engine.config.machine.manual.z_increment;
                     break;
+                case 'a':
+                case 'b':
+                    increment_inches = engine.config.machine.manual.ab_increment;
+                    break;
             }
         } catch (e) {
             console.error(e);
@@ -267,7 +304,7 @@ require("../css/toastr.min.css");
         var keyboard = new Keyboard();
         keyboard.on('go', function(move) {
             if (move) {
-                dashboard.engine.manualStart(move.axis, move.dir * 60.0 * (getManualMoveSpeed(move) || 0.1));
+                dashboard.engine(move.axis, move.dir * 60.0 * (getManualMoveSpeed(move) || 0.1));
             }
         });
 
@@ -285,7 +322,9 @@ require("../css/toastr.min.css");
     function setupKeypad() {
         var keypad = new Keypad('#keypad');
         keypad.on('go', function(move) {
-            if (move) {
+            if (move.second_axis) {
+                dashboard.engine.manualStart(move.axis, move.dir * 60.0 * (getManualMoveSpeed(move) || 0.1), move.second_axis, move.second_dir * 60.0 * (getManualMoveSpeed(move) || 0.1));
+            } else {
                 dashboard.engine.manualStart(move.axis, move.dir * 60.0 * (getManualMoveSpeed(move) || 0.1));
             }
         });
@@ -295,24 +334,42 @@ require("../css/toastr.min.css");
         });
 
         keypad.on('nudge', function(nudge) {
-            dashboard.engine.manualMoveFixed(nudge.axis, 60 * getManualMoveSpeed(nudge), nudge.dir * getManualNudgeIncrement(nudge), getManualMoveJerk(nudge));
-        });
-
-        keypad.on('enter', function() {
-            if(dashboard.engine.status.state == 'manual') {
-                dashboard.engine.manualExit();
-                keyboard.setEnabled(false);
-            } else {                
-                dashboard.engine.manualEnter();
-                keyboard.setEnabled(true);
+            var speed = getManualMoveSpeed(nudge);
+            var increment = getManualNudgeIncrement(nudge);
+            // var jerk = getManualMoveJerk(nudge);
+            if( nudge.second_axis){
+                dashboard.engine.manualMoveFixed(nudge.axis, 60 * speed, nudge.dir * increment, nudge.second_axis, nudge.second_dir * increment);
+                
+            } else {
+                dashboard.engine.manualMoveFixed(nudge.axis, 60 * getManualMoveSpeed(nudge), nudge.dir * getManualNudgeIncrement(nudge));
             }
         });
 
-        keypad.on('exit', function() {
-            dashboard.engine.manualExit();
-        });
+        // keypad.on('enter', function() {
+        //     if(dashboard.engine.status.state == 'manual') {
+        //         dashboard.engine.manualExit();
+        //         keyboard.setEnabled(false);
+        //     } else {                
+        //         dashboard.engine.manualEnter();
+        //         keyboard.setEnabled(true);
+        //     }
+        // });
+
+        // keypad.on('exit', function() {
+        //     dashboard.engine.manualExit();
+        // });
         return keypad;
     }
+
+    $('.manual-drive-exit').click(function(){
+        $('.manual-drive-message').html('');
+        $('.manual-drive-message').hide();
+        dashboard.engine.manualExit();
+    })
+
+    $('.manual-drive-enter').click(function(){
+        dashboard.engine.manualEnter();
+    })
 
 
     function showConsent () {
@@ -383,6 +440,61 @@ require("../css/toastr.min.css");
         });
     });
 
+    $('.go-to').on('mousedown', function() {
+        var move = {}
+        $('.modal-axi:visible').each(function(){
+            move[$(this).attr('id')] = parseFloat($(this).val());
+        });
+        dashboard.engine.goto(move);
+    });
+
+    $('.set-coordinates').on('mousedown', function() {
+        var move = {}
+        $('.modal-axi:visible').each(function(){
+            move[$(this).attr('id')] = parseFloat($(this).val());
+        });
+        dashboard.engine.set(move);
+    });
+
+    $('.fixed-switch input').on('change', function(){
+
+        if  ($('.fixed-switch input').is(':checked')) {
+            $('.drive-button').addClass('drive-button-fixed');
+            $('.slidecontainer').hide();
+            $('.fixed-input-container').show();
+            $('.fixed-input-container').css('display', 'flex');
+
+        } else {
+            $('.drive-button').removeClass('drive-button-fixed');
+            $('.slidecontainer').show();
+            $('.fixed-input-container').hide();
+        }
+    });
+
+
+    $('.xy-fixed').on('change', function(){
+        newDefault = $('.xy-fixed').val();
+                dashboard.engine.setConfig({machine:{manual:{xy_increment:newDefault}}}, function(err, data){
+                    if(err){
+                        console.log(err);
+                    }else {
+                        dashboard.engine.getConfig();
+                    }
+                });
+        });
+    $('.z-fixed').on('change', function(){
+        newDefault = $('.z-fixed').val();
+                dashboard.engine.setConfig({machine:{manual:{z_increment:newDefault}}}, function(err, data){
+                    if(err){
+                        console.log(err);
+                    }else {
+                        dashboard.engine.getConfig();
+                    }
+                });
+            
+    });   
+    
+
     $('.go-here').on('mousedown', function() {
         var gcode = "G0 ";
         for (var i = 0; i < axisValues.length; i++) {
@@ -400,8 +512,14 @@ require("../css/toastr.min.css");
     });
 
     $('.axi').on('click', function(e) {
+        var goString = 'Go to ';
         e.stopPropagation();
         $('.go-here').show();
+        $('#keypad').hide();
+        $('.go-to-container').show();
+        $('.go-to-container').css('display', 'flex');
+
+        
     });
 
     $('.axi').on('focus', function(e) {
@@ -409,11 +527,16 @@ require("../css/toastr.min.css");
         $(this).val(parseFloat($(this).val().toString()));
         $(this).select();
     });
+
     $(document).on('click', function() {
         $('.posx').val($('.posx').val());
         $('.posy').val($('.posy').val());
         $('.posz').val($('.posz').val());
+        $('.posa').val($('.posa').val());
+        $('.posb').val($('.posb').val());
         $('.go-here').hide();
+        $('#keypad').show();
+        $('.go-to-container').hide();
     });
 
     $('.axi').keyup(function(e) {
@@ -431,21 +554,11 @@ require("../css/toastr.min.css");
         }
     });
 
-    // Handlers for the home/probe buttons
-    $('.button-zerox').click(function(e) {
-        dashboard.engine.sbp('ZX');
-    });
-    $('.button-zeroy').click(function(e) {
-        dashboard.engine.sbp('ZY');
-    });
-    $('.button-zeroz').click(function(e) {
-        dashboard.engine.sbp('ZZ');
-    });
-    $('.button-zeroa').click(function(e) {
-        dashboard.engine.sbp('ZA');
-    });
-    $('.button-zerob').click(function(e) {
-        dashboard.engine.sbp('ZB');
+    $('.zero-button').click(function() {
+        var axi = $(this).parent('div').find('input').attr('id');
+        var obj = {};
+        obj[axi] = 0;
+        dashboard.engine.set(obj)
     });
 
 
@@ -463,8 +576,7 @@ require("../css/toastr.min.css");
 	    }
 	});
 
-    var disconnected = false;
-    last_state_seen = null;
+
     engine.on('disconnect', function() {
         if (!disconnected) {
             disconnected = true;
@@ -538,6 +650,51 @@ require("../css/toastr.min.css");
             setTimeout(ping, 2000);
         });
     };
+
+// var range_el = document.querySelector('input[type=range]'), style_el, sel, pref, comps, a, b;
+
+// if(range_el) {
+//   style_el = document.createElement('style');
+//   sel = '.js[class*="webkit"] input[type=range]';
+//   pref = '-webkit-slider-';
+//   comps = ['runnable-track', 'thumb'];
+//   a = ':after'; b = ':before';
+  
+//   document.body.appendChild(style_el);
+  
+//   range_el.addEventListener('input', function() {
+//     var str = '', 
+//         curr_val = this.value, 
+//         min = this.min || 0, 
+//         max = this.max || 100, 
+//         perc = 100*(curr_val - min)/(max - min), 
+//         fill_val = ((perc <= 5)?'30px':((~~perc) + '%')) + ' 100%', 
+//         s_total = 60*curr_val, 
+//         ss = ~~(s_total%60), 
+//         m = Math.floor(s_total/60), 
+//         speaker_rules;
+
+//     if(ss < 10) { ss = '0' + ss; }
+    
+//    console.log($(sel + '::' + pref + comps[0]).css('background-size', fill_val ));
+    
+    
+//     str += sel + '::' + pref + comps[0] + '{background-size:' + fill_val + '}';
+//     str += sel + '::' + pref + comps[1] + a + ', ' + 
+//       sel + ' /deep/ #' + comps[1] + a + '{content:"' + m + ':' + ss + '"}';
+    
+//     speaker_rules = 'opacity:' + Math.min(1, perc/50).toFixed(2) + ';' + 
+//       'color:rgba(38,38,38,' + 
+//       ((perc <= 50) ? 0 : (((perc - 50)/50).toFixed(2))) + ')';
+    
+//     str += sel + '::' + pref + comps[0] + b + ',' + 
+//       sel + ' /deep/ #' + comps[0] + b + '{' + speaker_rules + '}';
+        
+//     style_el.textContent = str;
+//     console.log(style_el);
+//   }, false);
+
+// }
 
     ping();
 

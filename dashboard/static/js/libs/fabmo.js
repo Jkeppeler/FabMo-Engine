@@ -212,16 +212,6 @@ FabMoDashboard.prototype._simulateCall = function(name, data, callback) {
 			showToaster(toast);
 		break;
 
-		case "showDRO":
-			text.textContent = "DRO Shown.";
-			showToaster(toast);
-		break;
-
-		case "hideDRO":
-			text.textContent = "DRO Hidden.";
-			showToaster(toaster);
-		break;
-
 		default:
 			text.textContent = name + " called.";
 			showToaster(toast);
@@ -348,27 +338,6 @@ FabMoDashboard.prototype.launchApp = function(id, args, callback) {
 	this._call("launchApp", {'id': id, 'args':args}, callback);
 }
 
-/**
- * Show the DRO (Digital ReadOut) in the dashboard if it is not already shown.
- *
- * @method showDRO
- * @param {function} callback Called once the DRO has been displayed.
- * @param {Error} callback.err Error object if there was an error.
- */
-FabMoDashboard.prototype.showDRO = function(callback) {
-	this._call("showDRO", null, callback);
-}
-
-/**
- * Hide the DRO (Digital ReadOut) in the dashboard if it is not already hidden.
- *
- * @method hideDRO
- * @param {function} callback Called once the DRO has been hidden.
- * @param {Error} callback.err Error object if there was an error.
- */
-FabMoDashboard.prototype.hideDRO = function(callback) {
-	this._call("hideDRO", null, callback);
-}
 
 //Modal Functions
 FabMoDashboard.prototype.showModal = function(options, callback) {
@@ -638,7 +607,6 @@ FabMoDashboard.prototype.runNext = function(callback) {
  * @param {Error} callback.err Error object if there was an error.
  */
 FabMoDashboard.prototype.pause = function(callback) {
-	console.log('pause fabmo');
 	this._call("pause",null, callback);
 }
 
@@ -687,8 +655,8 @@ FabMoDashboard.prototype.manualMoveFixed = function(axis, speed, distance, callb
  * @param {Number} axis One of `x`,`y`,`z`,`a`,`b`,`c`
  * @param {Number} speed Speed in current tool units.  Negative to move in the negative direction.
  */
-FabMoDashboard.prototype.manualStart = function(axis, speed) {
-	this._call("manualStart",{"axis":axis, "speed":speed}, callback);
+FabMoDashboard.prototype.manualStart = function(axis, speed, second_axis, second_speed) {
+	this._call("manualStart",{"axis":axis, "speed":speed, "second_axis":second_axis, "second_speed":second_speed }, callback);
 }
 
 

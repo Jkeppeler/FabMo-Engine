@@ -11,6 +11,7 @@ var Leveler = require('./commands/leveler').Leveler;
 var u = require('../../util');
 var config = require('../../config');
 var stream = require('stream');
+var ManualDriver = require('../manual').ManualDriver;
 
 var SYSVAR_RE = /\%\(([0-9]+)\)/i ;
 var USERVAR_RE = /\&([a-zA-Z_]+[A-Za-z0-9_]*)/i ;
@@ -71,10 +72,13 @@ function SBPRuntime() {
 	this.continue_callback = null;
 	this.vs_change = 0;
 	this.units = null;
+	this.absoluteMode = true;
 
 	// Physical machine state
 	this.machine = null;
 	this.driver = null;
+
+	this.inManualMode = false;
 
 }
 util.inherits(SBPRuntime, events.EventEmitter);
@@ -110,6 +114,7 @@ SBPRuntime.prototype.connect = function(machine) {
 	//this.status_handler = this._onG2Status.bind(this);
 	//this.driver.on('status', this.status_handler);
 	this.connected = true;
+	this.ok_to_disconnect = false;
 	log.info('Connected OpenSBP runtime.');
 };
 
@@ -133,7 +138,54 @@ SBPRuntime.prototype.disconnect = function() {
 };
 
 SBPRuntime.prototype.executeCode = function(s, callback) {
-	this.runString(s, callback);
+	if(typeof s === "string" || s instanceof String) {
+		this.runString(s, callback);		
+	} else {
+		if(this.inManualMode) {
+			switch(s.cmd) {
+			case 'enter':
+				//	this.enter();
+				break;
+			default:
+				if(!this.helper) {
+					log.warn("Can't accept command '" + s.cmd + "' - not entered.");
+					this.machine.setState(this, 'idle');
+					return;
+				}
+				switch(s.cmd) {
+					case 'exit':
+						this.helper.exit();
+						// RESUME KIDS
+						break;
+
+					case 'start':
+						this.helper.startMotion(s.axis, s.speed);
+						break;
+
+					case 'stop':
+						this.helper.stopMotion();
+						break;
+
+					case 'maint':
+						this.helper.maintainMotion();
+						break;
+
+					case 'fixed':
+						if(!this.helper) {
+							this.enter();
+						}
+						this.helper.nudge(s.axis, s.speed, s.dist);
+						break;
+
+					default:
+						log.error("Don't know what to do with '" + s.cmd + "' in manual command.");
+						break;
+
+				}
+			}
+
+		}
+	}
 }
 
 //Check whether the code needs auth
@@ -467,24 +519,29 @@ SBPRuntime.prototype._run = function() {
 		this.waitingForStackBreak = false;
 		this.gcodesPending = false;
 
-		var that = this;
+		//var this = this;
 		var onStat = function(stat) {
+			if(this.inManualMode) {
+				return;
+			}
 			switch(stat) {
-				case that.driver.STAT_STOP:
-					that.gcodesPending = false;
-                    that._executeNext();
+				case this.driver.STAT_STOP:
+					this.gcodesPending = false;
+                    this._executeNext();
 				break;
-				case that.driver.STAT_HOLDING:
-					//that.paused = true;
-					that.machine.setState(that, 'paused');
+				case this.driver.STAT_HOLDING:
+					//this.paused = true;
+					this.machine.setState(this, 'paused');
 				break;
-                case that.driver.STAT_PROBE:
-				case that.driver.STAT_RUNNING:
-					that.machine.setState(that, 'running');
-				    if(that.pendingFeedhold) {
-                        that.pendingFeedhold = false;
-                        that.driver.feedHold();
-                    }
+                case this.driver.STAT_PROBE:
+				case this.driver.STAT_RUNNING:
+					if(!this.inManualMode) {
+						this.machine.setState(this, 'running');
+					    if(this.pendingFeedhold) {
+	                        this.pendingFeedhold = false;
+	                        this.driver.feedHold();
+	                    }
+                	}
                 break;
 
 			}
@@ -497,7 +554,7 @@ SBPRuntime.prototype._run = function() {
 			this.stream = new stream.PassThrough();
 			if(this.driver) {
 				this.driver.runStream(this.stream)
-				.on('stat', onStat)
+				.on('stat', onStat.bind(this))
 				.on('status', this._onG2Status.bind(this))
                 .then(function() {
 					this.file_stack = []
@@ -522,7 +579,6 @@ SBPRuntime.prototype._executeNext = function() {
 	// Continue is only for resuming an already running program.  It's not a substitute for _run()
 	if(!this.started) {
 		log.warn('Got a _executeNext() but not started');
-		log.stack();
         return;
 	}
 
@@ -550,12 +606,13 @@ SBPRuntime.prototype._executeNext = function() {
 			setImmediate(this._executeNext.bind(this));
 			return;
 		} else {
-			log.debug("This is not a nested end.  No stack.")
+			log.debug("This is not a nested end.  No stack.");
 			this.emit_gcode('M30');
 			if(!this.driver) {
 				this._end();
 			} else {
                 this.prime();
+                //setTimeout(function() {this.prime();}.bind(this), 3000)
             }
 			return;
 		}
@@ -571,6 +628,7 @@ SBPRuntime.prototype._executeNext = function() {
 
 		if(this.gcodesPending && this.driver) {
 			log.debug("Deferring because g-codes pending.");
+			this.driver.requestStatusReport();
 			return; // G2 is running, we'll get called when it's done
 		} else {
 			// G2 is stopped, execute stack breaking command now
@@ -1290,7 +1348,6 @@ SBPRuntime.prototype._popFileStack = function() {
 	this.end_message = frame.end_message
 }
 
-// Add GCode to the current chunk, which is dispatched on a break or end of program
 SBPRuntime.prototype.emit_gcode = function(s) {
 	log.debug("emit_gcode: " + s);
 	if(this.file_stack.length > 0) {
@@ -1470,20 +1527,12 @@ SBPRuntime.prototype.pause = function() {
 }
 
 SBPRuntime.prototype.quit = function() {
+	if(this.ok_to_disconnect) {
+		return this._end();
+	}
+
 	if(this.machine.status.state == 'stopped' || this.machine.status.state == 'paused') {
 		this.machine.driver.quit();
-		if(this.machine.status.job) {
-			this.machine.status.job.fail(function(err, job) {
-				this.machine.status.job=null;
-				this.driver.setUnits(config.machine.get('units'), function() {
-					this.machine.setState(this, 'idle');
-				}.bind(this));
-			}.bind(this));
-		} else {
-			this.driver.setUnits(config.machine.get('units'), function() {
-				this.machine.setState(this, 'idle');
-			}.bind(this));
-		}
 	} else {
 		this.quit_pending = true;
 		this.driver.quit();
@@ -1497,6 +1546,28 @@ SBPRuntime.prototype.resume = function() {
 		} else {
 			this.driver.resume();
 		}
+}
+
+SBPRuntime.prototype.manualEnter = function(message, callback) {
+	this.inManualMode = true;
+	this._update();
+	
+	if(this.machine) {
+		this.machine.setState(this, 'manual', message ? {'message' : message } : undefined);
+		this.machine.authorize();
+	}
+
+	this.helper = new ManualDriver(this.driver, this.stream);
+	this.helper.enter().then(function() {
+		this.inManualMode = false;
+		this.machine.setState(this, "running");
+		this._update();
+		if(this.absoluteMode) {
+			this.emit_gcode('G90');
+		}
+		this.emit_gcode('G4 P0.1');
+		callback();
+	}.bind(this));
 }
 
 exports.SBPRuntime = SBPRuntime;

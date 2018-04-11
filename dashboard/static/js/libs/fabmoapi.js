@@ -231,7 +231,11 @@ FabMoAPI.prototype.getConfig = function(callback) {
 FabMoAPI.prototype.setConfig = function(cfg_data, callback) {
 	this._post('/config', cfg_data, callback, function(err, data) {
 		callback = callback || function() {};
-		callback(null, cfg_data);
+		if(err){
+			callback(err);
+		} else {
+			callback(null, data);
+		}
 	});
 }
 
@@ -374,12 +378,21 @@ FabMoAPI.prototype.sbp = function(code, callback) {
 	this.runCode('sbp', code, callback);
 }
 
+
+FabMoAPI.prototype.goto = function(move, callback){
+	this.executeRuntimeCode('manual', {'cmd': 'goto', "move":move});
+}
+
+FabMoAPI.prototype.set = function(move, callback){
+	this.executeRuntimeCode('manual', {'cmd': 'set', "move":move});
+}
+
 FabMoAPI.prototype.executeRuntimeCode = function(runtime, code, callback) {
 	this.socket.emit('code', {'rt' : runtime, 'data' : code})
 }
 
-FabMoAPI.prototype.manualStart = function(axis, speed) {
-	this.executeRuntimeCode('manual', {'cmd': 'start', 'axis' : axis, 'speed' : speed});
+FabMoAPI.prototype.manualStart = function(axis, speed, second_axis, second_speed) {
+	this.executeRuntimeCode('manual', {'cmd': 'start', "axis":axis, "speed":speed, "second_axis":second_axis, "second_speed":second_speed });
 }
 
 FabMoAPI.prototype.manualHeartbeat = function() {
@@ -398,8 +411,8 @@ FabMoAPI.prototype.manualExit = function() {
 	this.executeRuntimeCode('manual', {'cmd': 'exit'});
 }
 
-FabMoAPI.prototype.manualMoveFixed = function(axis, speed, distance) {
-	this.executeRuntimeCode('manual', {'cmd': 'fixed', 'axis' : axis, 'speed' : speed, 'dist' : distance});
+FabMoAPI.prototype.manualMoveFixed = function(axis, speed, distance, second_axis, second_distance) {
+	this.executeRuntimeCode('manual', {'cmd': 'fixed', 'axis' : axis, 'speed' : speed, 'dist' : distance, 'second_axis':second_axis, 'second_dist' : second_distance});
 }
 //TH for livecode from manual template; ...updated with "callback" fix to match fabmo.js
 //FabMoAPI.prototype.livecodeStart = function(axis, speed, callback) {
