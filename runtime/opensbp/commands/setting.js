@@ -9,14 +9,42 @@ var openSBP = require('../opensbp.js');
 // Set to Absolute coordinates
 exports.SA = function(args) {
 	this.emit_gcode("G90");
-	this.emit_gcode("M0");
+	//this.emit_gcode("M0");
 
 };
+
+exports.SC = function(args, callback) {
+	try {
+	switch(args[0]) {
+		case 0:
+			cs = "G54";
+			break;
+		case 1:
+			cs = "G55";
+			break;
+		default:
+			throw new Error("Invalid coordinate system specified: " + args[0])
+			break;
+	}
+	this.emit_gcode(cs)
+	this.coordinateSystem = cs;
+	} catch(e) {
+		return callback(e)
+	}
+	this.cmd_posx = null;
+	this.cmd_posy = null;
+	this.cmd_posz = null;
+	this.cmd_posa = null;
+	this.cmd_posb = null;
+	this.cmd_posc = null;
+
+	callback();
+}
 
 //  Set to Relative coordinates
 exports.SR = function(args) {
 	this.emit_gcode("G91");
-	this.emit_gcode("M0");
+	//this.emit_gcode("M0");
 };
 
 // Set to MOVE mode

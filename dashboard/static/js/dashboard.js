@@ -358,14 +358,10 @@ define(function(require) {
     }.bind(this));
 
     this._registerHandler('pause', function(data, callback) {
-      console.log('pause');
       this.engine.pause(function(err, result) {
-        console.log('pause');
         if (err) {
-          console.log(err);
           callback(err);
         } else {
-          console.log(result);
           callback(null);
         }
       });
@@ -403,6 +399,26 @@ define(function(require) {
 
     this._registerHandler('manualStart', function(data, callback) {
       this.engine.manualStart(data.axis, data.speed, function(err, result) {
+        if (err) {
+          callback(err);
+        } else {
+          callback(null);
+        }
+      });
+    }.bind(this));
+
+        this._registerHandler('manualEnter', function(data, callback) {
+      this.engine.manualEnter(function(err, result) {
+        if (err) {
+          callback(err);
+        } else {
+          callback(null);
+        }
+      });
+    }.bind(this));
+
+    this._registerHandler('manualExit', function(data, callback) {
+      this.engine.manualExit(function(err, result) {
         if (err) {
           callback(err);
         } else {

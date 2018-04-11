@@ -105,6 +105,9 @@
             <div style="display: table-row;">
                 <div class="aaxis" style="display: table-cell; padding-right: 1em"><label>A : <span class="posa">A.AAA</span></label></div>
                 <div class="baxis" style="display: table-cell; padding-right: 1em"><label>B : <span class="posb">B.BBB</span></label></div>
+                <div class="fabmo-status" style="display: table-cell; padding-right: 1em"><label><span class="state"></label></div>
+            </div>
+
             </div>
 
             </section>
@@ -257,10 +260,11 @@
                       <i class="fa fa-keypad fa-lg fa-arrow-left"></i>
                       </div>
                     </div>
-                  <div class="keypad-cell"><div id="keyboard" class="keyboard noselect keyboard-button keypad-button"><i class="fa fa-keypad fa-lg fa-keyboard-o"></i></div></div>
+                  <div class="keypad-cell"><div id="manual-enter" class="keypad-button noselect enter-button"><i class="fa fa-keypad fa-lg fa-gamepad"></i></div></div>
                   <div class="keypad-cell"><div class="x_pos keypad-button drive-button square"><i class="fa fa-keypad fa-lg fa-arrow-right"></i></div></div>
                 </div>
                 <div class="keypad-row">
+                  <!--<div class="keypad-cell"><div class="keypad-button drive-button exit-button square"><i class="fa fa-keypad fa-lg fa-close"></i></div></div>-->
                   <div class="keypad-cell"></div>
                   <div class="keypad-cell"><div class="y_neg keypad-button drive-button square"><i class="fa fa-keypad fa-lg fa-arrow-down"></i></div></div>
                   <div class="keypad-cell"></div>
@@ -336,7 +340,7 @@
           </div>
       </div>
       </div>
-                <div class="footBar fabmo-file-control">
+      <div class="footBar fabmo-file-control">
             <div class="currentContainer">
               <p class="currentJobTitle" ></p>
             </div>
@@ -372,15 +376,19 @@
            </div>
 
 
-
-            <div class='pauseJob fabmo-pause-button'>
-              <p>STOP</p>
+           <div class='pauseJob-wrapper'>
+            <div class='pauseJob fabmo-pause-button '>
+              <div >STOP</div>
             </div>
-
+          </div>
 
           <span class='fabmo-resume-stop'>
-            <div class='resumeJob'>RESUME</div>
-            <div class='stopJob'>QUIT</div>
+            <div class='but resumeJob'>
+              <div>RESUME</div>
+            </div>
+            <div class='but stopJob'>
+              <div>QUIT</div>
+            </div>
           </span>
 
           </div>
