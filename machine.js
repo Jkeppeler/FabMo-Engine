@@ -357,7 +357,7 @@ Machine.prototype.fire = function(force) {
 
 Machine.prototype.authorize = function(timeout) {
 	var timeout = timeout || config.machine.get('auth_timeout');
-	if(timeout) {
+	if(config.machine.get('auth_required') && timeout) {
 		log.info("Machine is authorized for the next " + timeout + " seconds.");
 		if(this._authTimer) { clearTimeout(this._authTimer);}
 		this._authTimer = setTimeout(function() {
@@ -559,7 +559,6 @@ Machine.prototype.setState = function(source, newstate, stateinfo) {
 	this.fireButtonDebounce = false ;
 	if ((source === this) || (source === this.current_runtime)) {
 		log.info("Got a machine state change: " + newstate)
-
 		if(stateinfo) {
 			this.status.info = stateinfo
 			this.info_id += 1;
@@ -613,15 +612,20 @@ Machine.prototype.setState = function(source, newstate, stateinfo) {
 	this.emit('status',this.status);
 };
 
-Machine.prototype.pause = function() {
+Machine.prototype.pause = function(callback) {
 	if(this.status.state === "running") {
 		if(this.current_runtime) {
 			this.current_runtime.pause();
+			callback(null, 'paused');
+		} else {
+			calback("Not pausing because no runtime provided");
 		}
+	} else {
+		calback("Not pausing because machine is not running")
 	}
 };
 
-Machine.prototype.quit = function() {
+Machine.prototype.quit = function(callback) {
     this.disarm();
 	// Quitting from the idle state dismisses the 'info' data
 	if(this.status.state === "idle") {
@@ -636,15 +640,18 @@ Machine.prototype.quit = function() {
 	if(this.current_runtime) {
 		log.info("Quitting the current runtime...")
 		this.current_runtime.quit();
+		callback(null, 'quit');
 	} else {
 		log.warn("No current runtime!")
+		calback("Not quiting because no current runtime")
 	}
 };
 
-Machine.prototype.resume = function() {
+Machine.prototype.resume = function(callback) {
 	this.arm({
 		type : 'resume'
 	}, config.machine.get('auth_timeout'));
+	callback(null, 'resumed');
 }
 
 Machine.prototype.runFile = function(filename) {
