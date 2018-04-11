@@ -169,7 +169,7 @@ function Machine(control_path, callback) {
     this.driver.on('status', function(stat) {
     	this.handleFireButton(stat);
     	this.handleAPCollapseButton(stat);
-			this.handleOkayButton(stat);
+		this.handleOkayButton(stat);
 		this.handleCancelButton(stat);
     }.bind(this));
 }
@@ -241,7 +241,16 @@ Machine.prototype.die = function(err_msg) {
 Machine.prototype.restoreDriverState = function(callback) {
 	callback = callback || function() {};
 	this.driver.setUnits(config.machine.get('units'), function() {
-		config.driver.restore(callback);
+		this.driver.requestStatusReport(function(status) {
+			for (var key in this.status) {
+				if(key in status) {
+					this.status[key] = status[key];
+				}
+			}			
+			config.driver.restore(function() {
+				callback();
+			});			
+		}.bind(this));
 	}.bind(this));
 }
 
@@ -498,6 +507,7 @@ Machine.prototype._runFile = function(filename) {
 Machine.prototype.setRuntime = function(runtime, callback) {
 	try {
 		if(runtime) {
+
 			if(this.current_runtime != runtime) {
 				if(this.current_runtime) {
 					this.current_runtime.disconnect();
