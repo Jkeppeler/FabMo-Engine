@@ -203,6 +203,7 @@ G2.prototype._createCycleContext = function() {
 		this._streamDone = true;
 		// TODO factor this out
 		if(!this.quit_pending) {
+			this.gcode_queue.enqueue('M100 ({out4:0})')
 			this.gcode_queue.enqueue('M30');
 		}
 		this.sendMore();
@@ -864,7 +865,7 @@ G2.prototype.sendMore = function() {
 			}
 		}
 		else {
-			log.warn("Not writing to gcode due to lapse in responses")
+            //log.warn("Not writing to gcode due to lapse in responses")
 		}
 	} else {
 		if(this.gcode_queue.getLength() > 0) {
