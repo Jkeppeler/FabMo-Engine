@@ -450,7 +450,6 @@ define(function(require) {
     }.bind(this));
 
 //TH  Preserved Ted Add-ins over Merge conflict ... probably not real issue here
-//<<<<<<< HEAD
     //TH Section for doing live Moves using manual as template ... not consistent with other patterns?
     this._registerHandler('livecodeNudge', function(data, callback) {
       this.engine.livecodeNudge(data.dir, data.dist, function(err, result) {
@@ -463,10 +462,8 @@ define(function(require) {
       });
     }.bind(this));
 
-//=======
     this._registerHandler('zero', function(text, callback) {
       this.engine.zero(text, function(err, result) {
-//>>>>>>> b72b8cbdbc7951f8b59c6d263f88b388c26d45b4
         if (err) {
           callback(err);
         } else {
@@ -476,9 +473,7 @@ define(function(require) {
     }.bind(this));
 
 //TH  Preserved Ted Add-ins over Merge conflict ... probably not real issue here
-//<<<<<<< HEAD
     this._registerHandler('livecodeStart', function(data, callback) {
-//      this.engine.livecodeStart(data.axis, data.speed, function(err, result) {
       this.engine.livecodeStart(data.xloc, data.yloc, data.zloc, data.speed, function(err, result) {
         if (err) {
 log.debug("_regHandler in dashboard.js ERR: " + JSON.stringify(data));
@@ -511,9 +506,6 @@ log.debug("_regHandler in dashboard.js OK: " + JSON.stringify(data));
     }.bind(this));
 
     this._registerHandler('getApps', function(data, callback) {
-//=======
-//    this._registerHandler('getApps', function(data, callback) {
-//>>>>>>> b72b8cbdbc7951f8b59c6d263f88b388c26d45b4
       this.engine.getApps(function(err, result) {
         if (err) {
           callback(err);

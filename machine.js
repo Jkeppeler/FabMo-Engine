@@ -778,17 +778,11 @@ Machine.prototype.executeRuntimeCode = function(runtimeName, code) {
 			return this._executeRuntimeCode(runtimeName, code);
 		}
 //TH left Ted version of merge issue
-//<<<<<<< HEAD
-// //TH		if(runtimeName === 'manual') {
+//TH		if(runtimeName === 'manual') {
 	 log.debug('arming in machine')
 		if(runtimeName === 'manual' || runtimeName === 'livecode') {
 			this.arm(null, config.machine.get('auth_timeout'));
-//=======
-		/*if(runtimeName === 'manual') {
-			this.arm(code, config.machine.get('auth_timeout'));
-//>>>>>>> b72b8cbdbc7951f8b59c6d263f88b388c26d45b4
-			return;
-		}*/ else {
+		} else {
 			this.arm({
 				type : 'runtimeCode',
 				payload : {
