@@ -10,7 +10,8 @@ var openSBP = require('../opensbp.js');
 exports.SA = function(args) {
 	this.absoluteMode = true;
 	this.emit_gcode("G90");
-	this.emit_gcode("M0");
+	//this.emit_gcode("M0");
+
 };
 
 exports.SC = function(args, callback) {
