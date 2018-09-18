@@ -2,9 +2,9 @@
   "name": "fabmo-shim",
   "version": "9.9.9",
   "description": "Update shim for fabmo.",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
-    "install" : "./install.sh"
+    "install": "./install.sh"
   },
   "repository": {
     "type": "git",
@@ -15,5 +15,8 @@
   "bugs": {
     "url": "https://github.com/FabMo/FabMo-Engine/issues"
   },
-  "homepage": "https://github.com/FabMo/FabMo-Engine#readme"
+  "homepage": "https://github.com/FabMo/FabMo-Engine#readme",
+  "dependencies": {
+    "fs-extra": "^0.23.1"
+  }
 }
