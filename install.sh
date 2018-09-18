@@ -11,8 +11,8 @@ mkdir ./fmu
 echo "Entering fmu directory..."
 cd ./fmu
 
-echo "Unpacking FMU: $1"
-gunzip < $1 | tar -xvf -
+echo "Unpacking FMP"
+gunzip < /opt/fabmo/fabmo-update.fmp | tar -xvf -
 rm -rf /opt/fabmo/fabmo-update.fmp
 
 echo "Applying update..."
