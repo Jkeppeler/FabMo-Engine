@@ -1,0 +1,20 @@
+{
+  "name": "fabmo-shim",
+  "version": "9.9.9",
+  "description": "Update shim for fabmo.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "postinstall" : "install.sh"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/FabMo/FabMo-Engine.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/FabMo/FabMo-Engine/issues"
+  },
+  "homepage": "https://github.com/FabMo/FabMo-Engine#readme"
+}
