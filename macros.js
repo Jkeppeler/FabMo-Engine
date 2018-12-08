@@ -149,7 +149,7 @@ var _parseMacroFile = function(filename, callback) {
 	});
 }
 
-// Update an existing macro with new content
+// Update an existing macro with new content //**TH- only doing this because we want copy to edit?
 //       id - The macro to update
 //    macro - The macro object that contains the new content
 // callback - called on completion, with an error if appropriate
@@ -263,6 +263,7 @@ var save = function(id, callback) {
 
 // Load all macros from disk
 var load = function(callback) {
+console.log("starting Macro list");
 	var macro_path = config.getDataDir('macros');
 //	var re = /macro_([0-9]+)\.(nc|sbp)/
 	var re = /macro_([0-9]+)\.(nc|sbp|sbc)/
@@ -273,6 +274,7 @@ var load = function(callback) {
 		} else {
 			for(i=0; i<files.length; i++) {
 				files[i] = path.join(macro_path, files[i]);
+console.log("a path- ", macro_path);
 			}
 			async.map(files, _parseMacroFile, function(err, results) {
 				results.forEach(function(info) {
