@@ -6,7 +6,7 @@
  * Macros are sort of "canned routines" that are analagous to the "custom cuts" in SB3.
  * They are in fact, invoked in the same way in the OpenSBP runtime as they were in SB3,
  * by using the C# command (C3 to home the tool, C2 for Z-zero, etc.)
- * 
+ *
  * Macros are stored on disk at (for example) /opt/fabmo/macros - anything in this directory is scanned
  * at startup and files containing an appropriate header are loaded into memory.  Ideally macros can be
  * in any file format, but the OpenSBP format is the only one that is actually implemented right now.
@@ -42,8 +42,8 @@ var _createGCodeHeader = function(options) {
 	name = options.name || "Untitled Macro"
 	description = options.description || ""
 	enabled = options.enabled || true
-	return "(" + MARKER + "name:" + name + ")\n" + 
-	       "(" + MARKER + "description:" + description + ")\n" + 
+	return "(" + MARKER + "name:" + name + ")\n" +
+	       "(" + MARKER + "description:" + description + ")\n" +
 	       "(" + MARKER + "enabled:" + enabled + ")\n"
 }
 
@@ -51,7 +51,7 @@ var _createOpenSBPHeader = function(options) {
 	name = options.name || "Untitled Macro"
 	description = options.description || ""
 	enabled = options.enabled || true
-	return "'" + MARKER + "name:" + name + "\n" + 
+	return "'" + MARKER + "name:" + name + "\n" +
 	       "'" + MARKER + "description:" + description + "\n"
 	       "'" + MARKER + "enabled:" + enabled + "\n"
 
@@ -227,7 +227,7 @@ var save = function(id, callback) {
 		switch(macro.type) {
 			case 'nc':
 				var header = _createGCodeHeader(macro);
-				break;			
+				break;
 			case 'sbp':
 				var header = _createOpenSBPHeader(macro);
 				break;
@@ -264,7 +264,8 @@ var save = function(id, callback) {
 // Load all macros from disk
 var load = function(callback) {
 	var macro_path = config.getDataDir('macros');
-	var re = /macro_([0-9]+)\.(nc|sbp)/
+//	var re = /macro_([0-9]+)\.(nc|sbp)/
+	var re = /macro_([0-9]+)\.(nc|sbp|sbc)/
 	macros = {};
 	fs.readdir(macro_path, function(err, files) {
 		if(err) {
@@ -282,7 +283,7 @@ var load = function(callback) {
 							ext = groups[2];
 							info.index = idx;
 							info.type = ext;
-							macros[idx] = info;							
+							macros[idx] = info;
 						}
 					}
 				});
@@ -313,7 +314,7 @@ var getInfo = function(idx) {
 			'index' : parseInt(macro.index)
 		}
 	} else {
-		return null; 
+		return null;
 	}
 }
 
@@ -367,7 +368,7 @@ var loadProfileMacros = function(callback) {
 		var b = path.join(installedMacrosDir, fn);
 		fs.stat(b, function(err, stats) {
 			if(!err && stats.isFile()) {
-				log.debug('Not Copying ' + a + ' -> ' + b + ' because it already exists.');					
+				log.debug('Not Copying ' + a + ' -> ' + b + ' because it already exists.');
 				callback();
 			} else {
 				log.debug('Copying ' + a + ' -> ' + b + ' because it doesnt already exist.');
