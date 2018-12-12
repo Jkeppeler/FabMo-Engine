@@ -1052,7 +1052,7 @@ SBPRuntime.prototype._executeCommand = function(command, callback) {
             }
             this.pc +=1;
             // We use the callback, stack breaker or not
-            setImmediate(callback) 
+//            setImmediate(callback) 
             return false;
         }
     } else {
@@ -1103,7 +1103,7 @@ SBPRuntime.prototype._execute = function(command, callback) {
         case "cmd":
             var broke = this._executeCommand(command, callback);
             if(!broke) {
-                setImmediate(callback);
+//                setImmediate(callback);
             }
             return broke;
             break;
@@ -1774,7 +1774,8 @@ SBPRuntime.prototype.emit_gcode = function(s) {
     var gcode = 'N' + n + ' ' + s + '\n'
 
     this.gcodesPending = true;
-    log.debug('Writing to stream: ' + gcode)
+    log.debug('Writing to stream: ' + gcode);
+log.debug('problem writing here ##th');
     this.stream.write(gcode);
 };
 

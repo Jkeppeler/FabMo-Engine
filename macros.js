@@ -264,9 +264,10 @@ var save = function(id, callback) {
 // Load all macros from disk
 var load = function(callback) {
 	var macro_path = config.getDataDir('macros');
-//	var re = /macro_([0-9]+)\.(nc|sbp)/
-	var re = /macro_([0-9]+)\.(nc|sbp|sbc)/
+	var re = /macro_([0-9]+)\.(nc|sbp)/         //##th
+//	var re = /macro_([0-9]+)\.(nc|sbp|sbc)/
 	macros = {};
+//console.log("about to read macros");        //##th		
 	fs.readdir(macro_path, function(err, files) {
 		if(err) {
 			callback(err);
@@ -299,6 +300,7 @@ var list = function() {
 	for(key in macros) {
 		retval.push(getInfo(key));
 	}
+//console.log("macro-list: ", key, getInfo(key));    //##th		
 	return retval;
 }
 
