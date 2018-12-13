@@ -1052,7 +1052,7 @@ SBPRuntime.prototype._executeCommand = function(command, callback) {
             }
             this.pc +=1;
             // We use the callback, stack breaker or not
-//            setImmediate(callback) 
+//            setImmediate(callback)                              //@th one of two lines commentted out to prevent timers.js callback error
             return false;
         }
     } else {
@@ -1103,7 +1103,7 @@ SBPRuntime.prototype._execute = function(command, callback) {
         case "cmd":
             var broke = this._executeCommand(command, callback);
             if(!broke) {
-//                setImmediate(callback);
+//                setImmediate(callback);                              //@th one of two lines commentted out to prevent timers.js callback error
             }
             return broke;
             break;

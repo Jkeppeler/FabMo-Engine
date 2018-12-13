@@ -114,6 +114,7 @@ var _parseMacroFile = function(filename, callback) {
 	var re = /[\(']!FABMO!(\w+):([^\)]*)\)?/
 	var obj = {}
 	var ok = false;
+console.log("thisMacro- ", filename);									//th
 	fs.readFile(filename, function(err, data) {
 		if(err) {
 			log.error(err)
