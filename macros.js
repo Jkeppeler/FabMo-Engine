@@ -114,7 +114,7 @@ var _parseMacroFile = function(filename, callback) {
 	var re = /[\(']!FABMO!(\w+):([^\)]*)\)?/
 	var obj = {}
 	var ok = false;
-console.log("thisMacro- ", filename);									//th
+console.log("thisMacroUP- ", filename);									//##th
 	fs.readFile(filename, function(err, data) {
 		if(err) {
 			log.error(err)
@@ -129,11 +129,16 @@ console.log("thisMacro- ", filename);									//th
 					var key = groups[1];
 					var value = groups[2];
 					obj[key] = value;
+console.log("this key = ", groups[1]);									//##th
+console.log("this value = ", groups[2]);									//##th
+console.log("this obj[key] = ", value);									//##th
 				} else {
 					break;
 				}
 				i+=1;
 			}
+ok = true;
+console.log("INSTALLED --> ", filename);									//##th
 			if(ok) {
 				obj.filename = filename;
 				obj.content = lines.slice(i,lines.length).join('\n');
@@ -265,8 +270,8 @@ var save = function(id, callback) {
 // Load all macros from disk
 var load = function(callback) {
 	var macro_path = config.getDataDir('macros');
-	var re = /macro_([0-9]+)\.(nc|sbp)/ 
-//	var re = /macro_([0-9]+)\.(nc|sbp|sbc)/    //##th
+//	var re = /macro_([0-9]+)\.(nc|sbp)/ 
+	var re = /macro_([0-9]+)\.(nc|sbp|sbc)/    //##th
 	macros = {};
 console.log("ABOUT to read macros");        //##th		
 	fs.readdir(macro_path, function(err, files) {
@@ -280,13 +285,24 @@ console.log("ABOUT to read macros");        //##th
 				results.forEach(function(info) {
 					if(info) {
 						groups = info.filename.match(re);
+console.log("groups - " + groups);                                        //##th
+console.log("match ... " + info.filename.match(re));                                        //##th
+
 						if(groups) {
+console.log("into group ###");                                        //##th
 							idx = parseInt(groups[1]);
 							ext = groups[2];
 							info.index = idx;
 							info.type = ext;
 							macros[idx] = info;
+						} else {                                     //##th ... section
+							idx = "7";
+							ext = "sbp";
+							info.index = idx;
+							info.type = ext;
+							macros[idx] = info;
 						}
+
 					}
 				});
 				callback(null);
@@ -301,7 +317,7 @@ var list = function() {
 	for(key in macros) {
 		retval.push(getInfo(key));
 	}
-//console.log("macro-list: ", key, getInfo(key));    //##th		
+console.log("macro-list: ", retval);    //##th		
 	return retval;
 }
 

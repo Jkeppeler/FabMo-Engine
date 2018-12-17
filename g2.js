@@ -354,6 +354,7 @@ G2.prototype.clearAlarm = function() {
 G2.prototype.setUnits = function(units, callback) {
 	this.command({gun:(units === 0 || units == 'in') ? 0 : 1});
 	this.requestStatusReport(function(stat) { callback()});
+console.log("inG2_units- " + units);                                       //##th
 }
 
 // Request a status report from G2
