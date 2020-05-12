@@ -320,6 +320,19 @@ define(function(require) {
       }.bind(this));
     }.bind(this));
 
+
+    this._registerHandler('deleteAll', function(data, callback) {
+      console.log("deletAll in dashboard")
+      this.engine.deleteAll(function(err, result) {
+        if (err) {
+          console.log('error in dashboard ' +  err)
+          callback(err);
+        } else {
+          callback(null, result);
+        }
+      }.bind(this));
+    }.bind(this));
+
     // Get the list of jobs in the queue
     this._registerHandler('getJobsInQueue', function(data, callback) {
       this.engine.getJobsInQueue(function(err, jobs) {

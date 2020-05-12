@@ -431,6 +431,19 @@ function bindMenuEvents() {
   });
 }
 
+$('#delete-all').click(function(e){
+  fabmo.deleteAll(function(err,data){
+    if(err) {
+      console.log("oh no an error")
+    } else {
+      console.log("yay they deleted");
+      updateQueue();
+      updateHistory();
+      updateOrder();
+    }
+  });
+});
+
 
 function noJob() {
   $('.with-job').data('job', false);

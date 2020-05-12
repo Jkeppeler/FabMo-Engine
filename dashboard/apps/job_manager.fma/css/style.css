@@ -1000,3 +1000,15 @@ table {
 
 
 .hidden, .hide { display:none; }
+
+#delete-all {
+  position: fixed;
+  bottom: 10px;
+  right: 10px;
+  background-color: red;
+  color: white;
+  width: 100px;
+  height: 30px;
+  border-radius: 5px;
+  cursor: pointer;
+}

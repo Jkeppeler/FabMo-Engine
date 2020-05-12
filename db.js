@@ -167,6 +167,14 @@ Job.prototype.delete = function(callback){
 	});
 };
 
+Job.deleteAll = function(callback){
+	console.log("MAde it to db");
+	jobs.remove({}, function(err){
+			callback();
+			notifyChange();
+	});
+};
+
 // The functions below are for retrieving jobs from the database.
 // They do not modify any information in the database
 

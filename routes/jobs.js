@@ -241,6 +241,29 @@ var getAllJobs = function(req, res, next) {
     });
 };
 
+var deleteAllJobs = function(req, res, next) {
+    console.log("Made it to routes for deleteAll");
+    var answer;
+    db.Job.deleteAll(function(err,result){
+        if(err){
+            console.log(err);
+            answer = {
+                status:"error",
+                message: err
+            }
+            res.json(answer);
+        } else {
+            console.log(result);
+            answer = {
+                status: "success",
+                data : "yay!"
+            }
+            res.json(answer);
+
+        }
+    })
+}
+
 /**
  * @apiGroup Jobs
  * @api {get} /jobs/history List jobs in the history
@@ -459,6 +482,7 @@ var getThumbnailImage = function(req, res, next) {
 module.exports = function(server) {
     server.post('/job', submitJob);
     server.get('/jobs', getAllJobs);
+    server.del('/jobs', deleteAllJobs);
     server.get('/job/:id', getJobById);
     server.del('/job/:id', cancelJob);
     server.patch('/job/:id', updateOrder);

@@ -645,6 +645,22 @@ FabMoDashboard.prototype.deleteJob = function(id, callback) {
 	this._call("deleteJob", id, callback)
 }
 
+
+/**
+ * Delete a job (cancels if running, sends to trash otherwise.)
+ *
+ * @method deleteAll
+ * @param {function} callback
+ * @param {Error} callback.err Error object if there was an error.
+ *
+ */
+FabMoDashboard.prototype.deleteAll = function(callback) {
+	console.log('Delete All in fabmo.js')
+	this._call("deleteAll",null ,callback)
+}
+
+
+
 FabMoDashboard.prototype.cancelJob = FabMoDashboard.prototype.cancelJob;
 
 /**

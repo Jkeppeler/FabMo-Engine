@@ -318,6 +318,11 @@ FabMoAPI.prototype.deleteJob = function(id, callback) {
 	this._del('/job/' + id, {}, callback, callback, 'job');
 }
 
+FabMoAPI.prototype.deleteAll = function(callback) {
+	console.log("Delete All in API");
+	this._del('/jobs', {}, callback, callback, 'job');
+}
+
 
 FabMoAPI.prototype.clearJobQueue = function(callback) {
 	this._del('/jobs/queue', callback, callback);
@@ -772,7 +777,7 @@ FabMoAPI.prototype._del = function(url, data, errback, callback, key) {
     cache: false,
 		'data' : data,
 		success: function(result){
-			if(data.status === "success") {
+			if(result.status === "success") {
 				if(key) {
 					callback(null, result.data.key);
 				} else {
