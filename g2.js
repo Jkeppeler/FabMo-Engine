@@ -333,6 +333,7 @@ log.error(new Error('There was a serial error'))
 G2.prototype.onSerialClose = function(data) {
 	this.connected= false;
 	log.error('G2 Core serial link was lost.')
+////## next line removed in an earlier edit on another branch, Brendan???
 	if(!intendedClose) {
 		process.exit(14);
 	}
