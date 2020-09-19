@@ -194,10 +194,10 @@ G2.prototype._createCycleContext = function() {
 	this._streamDone = false;
 	this.lineBuffer = []
 
-	// TODO factor this out; ////## really???
+	// TODO factor this out ////## Really???
 	// Inject a couple of G-Codes which are needed to start the machining cycle
 	st.write('G90\n' + 'G61\n')  ////## to make sure we are not in exact stop mode left from fixed moves
-//	st.write('G90\n')
+	////++ st.write('G90\n')
 	st.write('M100 ({out4:1})\n') // hack to get the "permissive relay" behavior while in-cycle
 	
 	// Handle data coming in on the stream
@@ -691,12 +691,10 @@ G2.prototype.manualFeedHold = function(callback) {
 // 		// }.bind(this));
 	// 	}
 
-	////## needs flag that says stopping
-
-	this.pause_flag = true;
-
+    ////## needs flag that says stopping
+    this.pause_flag = true;
 	this._write('\x04\n');
-	// this.gcode_queue.clear();  ////## seems redundant
+	//this.gcode_queue.clear();  ////## seems redundant
 
 }
 
