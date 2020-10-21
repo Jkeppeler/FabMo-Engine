@@ -355,6 +355,7 @@ function addHistoryEntries(jobs) {
 }
 
 function hideDropDown() {
+  console.log('hideDropDown');
   $('.dropDownWrapper').hide();
   $('.dropDown').hide();
   $('.commentBox').hide();
@@ -374,6 +375,7 @@ function bindMenuEvents() {
         updateQueue(false);
       });
     });
+    console.log('resubmit click');
     hideDropDown();
   });
 
@@ -386,6 +388,7 @@ function bindMenuEvents() {
     fabmo.launchApp('previewer', {
       'job': this.dataset.jobid
     });
+    console.log('preview click');
     hideDropDown();
   });
 
@@ -395,6 +398,7 @@ function bindMenuEvents() {
     fabmo.launchApp('editor', {
       'job': this.dataset.jobid
     });
+    console.log('edit click');
     hideDropDown();
   });
 
@@ -419,12 +423,14 @@ function bindMenuEvents() {
 
   $('.dropDownWrapper').off('click')
   $('.dropDownWrapper').click(function() {
+    console.log('dropdown click');
     hideDropDown();
   });
 
   $('.ellipses').off('click')
   $('.ellipses').click(function(evt) {
     //create and show a transparent overlay that you can click to close
+    console.log('Show Wrapper: Elipsis click');
     $('.dropDownWrapper').show();
     var dd = $(this).nextAll();
     dd.show();
@@ -466,6 +472,7 @@ function runningJob(job) {
       'job': job._id,
       "isLive": true
     });
+    console.log('preview click');
     hideDropDown();
   });
 
@@ -595,6 +602,7 @@ var sortable = Sortable.create(el, {
     } else if (Sortable.utils.is(ctrl, ".ellipses")) {
       var dd = ctrl.parentNode.childNodes[2];
       var cd = ctrl.parentNode.childNodes[1];
+      console.log('Show wrapper: ellipses sortable');
       $('.dropDownWrapper').show();
       dd.style.display = 'block';
       cd.style.display = 'block';
@@ -602,11 +610,13 @@ var sortable = Sortable.create(el, {
       fabmo.launchApp('previewer', {
         'job': id
       });
+      console.log('sortable preview')
       hideDropDown();
     } else if (Sortable.utils.is(ctrl, ".editJob")) {
       fabmo.launchApp('editor', {
         'job': id
       });
+      console.log('sortable edit')
       hideDropDown();
     } else if (Sortable.utils.is(ctrl, ".downloadJob")) {
       fabmo.navigate('/job/' + id + '/file');
