@@ -431,6 +431,7 @@ function bindMenuEvents() {
   $('.ellipses').click(function(evt) {
     //create and show a transparent overlay that you can click to close
     console.log('Show Wrapper: Elipsis click');
+    //TODO: This fires after click handler for resubmit job resolves reopening the dropdown wrapper.
     $('.dropDownWrapper').show();
     var dd = $(this).nextAll();
     dd.show();
