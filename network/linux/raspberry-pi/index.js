@@ -448,17 +448,19 @@ RaspberryPiNetworkManager.prototype.applyWifiConfig = function() {
 
 // Initialize the network manager.  This kicks off the state machines that process commands from here on out
 RaspberryPiNetworkManager.prototype.init = function() {
+  // Start Wifi if available
+  this.returnWifiNetworks();
+  this.checkWifiHealth();
+  setInterval(() => {
+    this.returnWifiNetworks();
+    this.checkWifiHealth();
+    // this.checkEthernetHealth();
+    // this.runEthernet();
+  }, 10000);
   this._joinAP(function(err, res){
     if(err){
       console.log(err)
     } else {
-      this.returnWifiNetworks();
-      setInterval(() => {
-        this.returnWifiNetworks();
-        this.checkWifiHealth();
-        // this.checkEthernetHealth();
-        // this.runEthernet();
-      }, 10000);
       setTimeout(
         function () {
           commands.startWpaSupplicant((err, result) => {
