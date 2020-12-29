@@ -472,7 +472,7 @@ RaspberryPiNetworkManager.prototype.init = function() {
     if(err){
       log.error('wpa errored with: ' + err)
     } else {
-      log.info('wpa started with: '+ res);
+      log.info('wpa started with: '+ result);
       setInterval(() => {
         this.returnWifiNetworks();
         this.checkWifiHealth();
