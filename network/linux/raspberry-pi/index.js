@@ -168,6 +168,16 @@ RaspberryPiNetworkManager.prototype.checkWifiHealth = function() {
         if(err){
           log.warn("Could not bring back up AP");
         } else {
+          setTimeout(
+            function () {
+              commands.startWpaSupplicant((err, result) => {
+                if(err){
+                  log.error('wpa errored with: ' + err)
+                } else {
+                  log.info('wpa started with: '+ res);
+                }
+              })
+            }, 10000);
           log.info("AP back up")
         }
       });
@@ -181,6 +191,16 @@ RaspberryPiNetworkManager.prototype.checkWifiHealth = function() {
         if(err){
           log.warn("Could not bring back up AP");
         } else {
+          setTimeout(
+            function () {
+              commands.startWpaSupplicant((err, result) => {
+                if(err){
+                  log.error('wpa errored with: ' + err)
+                } else {
+                  log.info('wpa started with: '+ res);
+                }
+              })
+            }, 10000);
           log.info("AP back up")
         }
       });
@@ -457,22 +477,22 @@ RaspberryPiNetworkManager.prototype.init = function() {
     // this.checkEthernetHealth();
     // this.runEthernet();
   }, 10000);
-  this._joinAP(function(err, res){
-    if(err){
-      console.log(err)
-    } else {
-      setTimeout(
-        function () {
-          commands.startWpaSupplicant((err, result) => {
-            if(err){
-              log.error('wpa errored with: ' + err)
-            } else {
-              log.info('wpa started with: '+ res);
-            }
-          })
-        }, 10000);
-    }
-  }.bind(this));
+  // this._joinAP(function(err, res){
+  //   if(err){
+  //     console.log(err)
+  //   } else {
+  //     setTimeout(
+  //       function () {
+  //         commands.startWpaSupplicant((err, result) => {
+  //           if(err){
+  //             log.error('wpa errored with: ' + err)
+  //           } else {
+  //             log.info('wpa started with: '+ res);
+  //           }
+  //         })
+  //       }, 10000);
+  //   }
+  // }.bind(this));
 }
 
 
