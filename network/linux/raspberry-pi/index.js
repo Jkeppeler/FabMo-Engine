@@ -168,16 +168,6 @@ RaspberryPiNetworkManager.prototype.checkWifiHealth = function() {
         if(err){
           log.warn("Could not bring back up AP");
         } else {
-          setTimeout(
-            function () {
-              commands.startWpaSupplicant((err, result) => {
-                if(err){
-                  log.error('wpa errored with: ' + err)
-                } else {
-                  log.info('wpa started with: '+ res);
-                }
-              })
-            }, 10000);
           log.info("AP back up")
         }
       });
@@ -191,16 +181,6 @@ RaspberryPiNetworkManager.prototype.checkWifiHealth = function() {
         if(err){
           log.warn("Could not bring back up AP");
         } else {
-          setTimeout(
-            function () {
-              commands.startWpaSupplicant((err, result) => {
-                if(err){
-                  log.error('wpa errored with: ' + err)
-                } else {
-                  log.info('wpa started with: '+ res);
-                }
-              })
-            }, 10000);
           log.info("AP back up")
         }
       });
