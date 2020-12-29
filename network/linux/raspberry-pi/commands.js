@@ -34,7 +34,7 @@ class commands {
   }
 
   static stopAP(callback) {
-    exec('pkill hostapd dnsmasq wpa_supplicant', callback)
+    exec('pkill hostapd dnsmasq', callback)
   }
 
   // Simplified function for making use of ifconfig command line tool.

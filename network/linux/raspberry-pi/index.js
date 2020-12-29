@@ -187,25 +187,23 @@ RaspberryPiNetworkManager.prototype.checkWifiHealth = function() {
   } else {
     if(!apInt){
       log.info('wifi is on at : ' + wlan0Int[0].address +' AP is down, rejoin AP');
-      commands.stopAP(
-        this._joinAP(function(err, res){
-          if(err){
-            log.warn("Could not bring back up AP");
-          } else {
-            setTimeout(
-              function () {
-                commands.startWpaSupplicant((err, result) => {
-                  if(err){
-                    log.error('wpa errored with: ' + err)
-                  } else {
-                    log.info('wpa started with: '+ res);
-                  }
-                })
-              }, 10000);
-            log.info("AP back up")
-          }
-        })
-      );
+      this._joinAP(function(err, res){
+        if(err){
+          log.warn("Could not bring back up AP");
+        } else {
+          setTimeout(
+            function () {
+              commands.startWpaSupplicant((err, result) => {
+                if(err){
+                  log.error('wpa errored with: ' + err)
+                } else {
+                  log.info('wpa started with: '+ res);
+                }
+              })
+            }, 10000);
+          log.info("AP back up")
+        }
+      });
     } else {
       log.info('wifi is on at : ' + wlan0Int[0].address +' and AP is healthy');
     }
@@ -470,15 +468,25 @@ RaspberryPiNetworkManager.prototype.applyWifiConfig = function() {
 
 // Initialize the network manager.  This kicks off the state machines that process commands from here on out
 RaspberryPiNetworkManager.prototype.init = function() {
-  // Start Wifi if available
-  this.returnWifiNetworks();
-  this.checkWifiHealth();
-  setInterval(() => {
-    this.returnWifiNetworks();
-    this.checkWifiHealth();
-    // this.checkEthernetHealth();
-    // this.runEthernet();
-  }, 10000);
+  commands.startWpaSupplicant((err, result) => {
+    if(err){
+      log.error('wpa errored with: ' + err)
+    } else {
+      log.info('wpa started with: '+ res);
+      setInterval(() => {
+        this.returnWifiNetworks();
+        this.checkWifiHealth();
+        // this.checkEthernetHealth();
+        // this.runEthernet();
+      }, 10000);
+    }
+  });
+  // setInterval(() => {
+  //   this.returnWifiNetworks();
+  //   this.checkWifiHealth();
+  //   // this.checkEthernetHealth();
+  //   // this.runEthernet();
+  // }, 10000);
   // this._joinAP(function(err, res){
   //   if(err){
   //     console.log(err)
