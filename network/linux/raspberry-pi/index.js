@@ -187,23 +187,25 @@ RaspberryPiNetworkManager.prototype.checkWifiHealth = function() {
   } else {
     if(!apInt){
       log.info('wifi is on at : ' + wlan0Int[0].address +' AP is down, rejoin AP');
-      this._joinAP(function(err, res){
-        if(err){
-          log.warn("Could not bring back up AP");
-        } else {
-          setTimeout(
-            function () {
-              commands.startWpaSupplicant((err, result) => {
-                if(err){
-                  log.error('wpa errored with: ' + err)
-                } else {
-                  log.info('wpa started with: '+ res);
-                }
-              })
-            }, 10000);
-          log.info("AP back up")
-        }
-      });
+      commands.stopAP(
+        this._joinAP(function(err, res){
+          if(err){
+            log.warn("Could not bring back up AP");
+          } else {
+            setTimeout(
+              function () {
+                commands.startWpaSupplicant((err, result) => {
+                  if(err){
+                    log.error('wpa errored with: ' + err)
+                  } else {
+                    log.info('wpa started with: '+ res);
+                  }
+                })
+              }, 10000);
+            log.info("AP back up")
+          }
+        })
+      );
     } else {
       log.info('wifi is on at : ' + wlan0Int[0].address +' and AP is healthy');
     }
