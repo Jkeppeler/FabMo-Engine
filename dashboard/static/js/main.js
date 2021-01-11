@@ -216,7 +216,9 @@ require("../css/toastr.min.css");
                     }
 
                     if (status['info'] && status['info']['id'] != lastInfoSeen) {
+                        console.log("Old Status:  " + lastInfoSeen);
                         lastInfoSeen = status['info']['id'];
+                        console.log("New Status:  " + lastInfoSeen);
                         if (status.info['message']) {
                             if(status.state ==="manual"){
                                 $('.manual-drive-message').show();
@@ -225,7 +227,9 @@ require("../css/toastr.min.css");
                             } else if (status.info['timer'] && status.info['timer'] <= 10) {
                                 keypad.setEnabled(false);
                                 keyboard.setEnabled(false);
+                                console.log('Autotimer Set');
                                 setTimeout(function() {
+                                    console.log('Autotimer resume');
                                     dashboard.engine.resume();
                                 }, status.info['timer'] * 1000);
                             } else {
@@ -261,7 +265,9 @@ require("../css/toastr.min.css");
                                 modalIsShown = true;
                                 dashboard.handlers.hideFooter();
                                 if (status.info['timer']) {
+                                    console.log('modal timer set');
                                     setTimeout(function() {
+                                        console.log('modal timer resume');
                                         dashboard.hideModal();
                                         modalIsShown = false;
                                         dashboard.engine.resume();
