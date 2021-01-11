@@ -403,7 +403,7 @@ define(function(require) {
     }.bind(this));
 
     this._registerHandler('resume', function(data, callback) {
-      console.log('Engine resume call'):
+      console.log('Engine resume call');
       this.engine.resume(function(err, result) {
         if (err) {
           callback(err);
