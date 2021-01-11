@@ -235,6 +235,7 @@ require("../css/toastr.min.css");
                             } else {
                                 keypad.setEnabled(false);
                                 keyboard.setEnabled(false);
+                                console.log("message modal set:  " + status.info.message);
                                 modalOptions = {
                                     message: status.info.message,
                                     okText: 'Resume',
