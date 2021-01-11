@@ -273,6 +273,7 @@ FabMoAPI.prototype.pause = function(callback) {
 }
 
 FabMoAPI.prototype.resume = function(input=false, callback) {
+	console.log('in api resume');
 	var args = {};
 	if (input){
 		args = input;

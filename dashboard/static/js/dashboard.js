@@ -382,6 +382,7 @@ define(function(require) {
     }.bind(this));
 
     this._registerHandler('pause', function(data, callback) {
+      console.log('engine pause call');
       this.engine.pause(function(err, result) {
         if (err) {
           callback(err);
@@ -402,6 +403,7 @@ define(function(require) {
     }.bind(this));
 
     this._registerHandler('resume', function(data, callback) {
+      console.log('Engine resume call'):
       this.engine.resume(function(err, result) {
         if (err) {
           callback(err);

@@ -749,6 +749,7 @@ FabMoDashboard.prototype.stop = function(callback) {
  * @param {Error} callback.err Error object if there was an error.
  */
 FabMoDashboard.prototype.resume = function(callback) {
+	console.log('in dash resume');
 	this._call("resume",null, callback);
 }
 

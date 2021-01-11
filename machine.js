@@ -884,6 +884,7 @@ Machine.prototype.setState = function(source, newstate, stateinfo) {
 // Pause the machine
 // This is pretty much passed through to whatever runtime is currently in control
 Machine.prototype.pause = function(callback) {
+		console.log('in machine pause');
 		if(this.status.state === "running") {
 			if(this.current_runtime) {
 				this.current_runtime.pause();
@@ -931,6 +932,7 @@ Machine.prototype.quit = function(callback) {
 
 // Resume from the paused state.
 Machine.prototype.resume = function(callback, input=false) {
+	console.log('in machine resume');
 	this.arm({
 		'type' : 'resume',
 		'input' : input
