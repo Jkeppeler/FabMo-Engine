@@ -514,6 +514,8 @@ G2.prototype.handleStatusReport = function(response) {
 
 	if(response.sr) {
 		// Update our copy of the system status
+		log.debug("G2 Got Status report");
+		log.debug(response.sr);
 		for (var key in response.sr) {
 			value = response.sr[key];
 			if(key === 'unit') {
